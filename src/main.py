@@ -46,8 +46,8 @@ def index_documents():
         bulk_requests = []
         titles = []
 
-  if bulk_requests:
-    index_batch(index, bulk_requests, titles)
+    if bulk_requests:
+      index_batch(index, bulk_requests, titles)
 
   client.indices.refresh(index=INDEX_NAME)
   print('Done indexing.')
@@ -65,12 +65,7 @@ def index_batch(index, bulk_requests, titles):
   print("Indexed {} documents.".format(index))
 
 def embed_text(text):
-    tensors = use_encoder(text)
-    # tensors = elmo_encoder(text,
-    #   signature="default",
-    #   as_dict=True)["default"]
-
-    vectors = session.run(tensors)
+    vectors = session.run(tensors, feed_dict={text_ph: text})
 
     # The dense_vector field allows a maximum of 499 dimensions, whereas
     # universal-sentence-encoder produces vectors with 512 dimensions.
@@ -109,7 +104,7 @@ def start_query_loop():
 
     print()
     print("{} total hits.".format(response['hits']['total']['value']))
-    print("Encoding time: {:.2f} sec".format(encoding_time), "search time: {:.2f} sec".format(search_time))
+    print("Encoding time: {:.2f} ms".format(encoding_time * 1000), "search time: {:.2f} ms".format(search_time * 1000))
     for hit in response['hits']['hits']:
       print('id: {}, score: {}'.format(hit['_id'], hit['_score']))
       print(hit['_source'])
@@ -126,6 +121,9 @@ BATCH_SIZE = 100
 print("Downloading pre-trained embeddings from tensorflow hub.")
 use_encoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
 #elmo_encoder = hub.Module("https://tfhub.dev/google/elmo/2", trainable=False)
+
+text_ph = tf.placeholder(tf.string)
+tensors = use_encoder(text_ph)
 
 print("Creating a tensorflow session.")
 session = tf.Session()
