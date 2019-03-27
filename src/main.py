@@ -54,19 +54,28 @@ def index_documents():
 
 def index_batch(index, bulk_requests, titles):
   print("Calculating embeddings for batch...")
-  tensors = embed(titles)
-  title_vectors = session.run(tensors)
+  title_vectors = embed_text(titles)
 
   for i, request in enumerate(bulk_requests):
-    # The dense_vector field allows a maximum of 499 dimensions, whereas
-    # universal-sentence-encoder produces vectors with 512 dimensions.
-    title_vector = title_vectors[i].tolist()[:499]
-    request['title_vector'] = title_vector
+    request['title_vector'] = title_vectors[i]
 
   print("Indexing documents...")
   bulk(client, bulk_requests)
 
   print("Indexed {} documents.".format(index))
+
+def embed_text(text):
+    tensors = use_encoder(text)
+    # tensors = elmo_encoder(text,
+    #   signature="default",
+    #   as_dict=True)["default"]
+
+    vectors = session.run(tensors)
+
+    # The dense_vector field allows a maximum of 499 dimensions, whereas
+    # universal-sentence-encoder produces vectors with 512 dimensions.
+    return [vector.tolist()[:499] for vector in vectors]
+
 
 def start_query_loop():
   while True:
@@ -76,8 +85,8 @@ def start_query_loop():
       break
 
     encoding_start = time.time()
-    query_tensor = embed([query])
-    query_vector = session.run(query_tensor)[0]
+
+    query_vector = embed_text([query])[0]
     encoding_time = time.time() - encoding_start
 
     script_query = {
@@ -88,7 +97,7 @@ def start_query_loop():
         "script": {
           "source": "cosineSimilarity(params.query_vector, doc['title_vector']) + 1.0",
           "params": {
-            "query_vector": query_vector.tolist()[:499]
+            "query_vector": query_vector
           }
         }
       }
@@ -115,7 +124,8 @@ DATA_FILE = 'data/posts/posts_small.json'
 BATCH_SIZE = 100
 
 print("Downloading pre-trained embeddings from tensorflow hub.")
-embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
+use_encoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
+#elmo_encoder = hub.Module("https://tfhub.dev/google/elmo/2", trainable=False)
 
 print("Creating a tensorflow session.")
 session = tf.Session()

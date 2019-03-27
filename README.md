@@ -15,9 +15,7 @@ on the StackOverflow dataset.
 
 # Usage
 
-`pip3 install elasticsearch`
-`pip3 install tensorflow`
-`pip3 install tensorflow_hub`
+`pip3 install elasticsearch tensorflow tensorflow_hub`
 
 `python3 src/main.py`
 
