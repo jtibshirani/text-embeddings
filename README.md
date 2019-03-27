@@ -1,6 +1,6 @@
 # Text Embeddings Prototype
 
-The simple script `src/main.py` indexes the first ~1000 questions from the
+The simple script `src/main.py` indexes the first ~20,000 questions from the
 [StackOverflow](https://github.com/elastic/rally-tracks/tree/master/so)
 dataset. Before indexing, each post's title is run through a pre-trained sentence embedding to
 produce a [`dense_vector`](https://www.elastic.co/guide/en/elasticsearch/reference/master/dense-vector.html).

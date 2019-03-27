@@ -99,7 +99,9 @@ def start_query_loop():
     }
 
     search_start = time.time()
-    response = client.search(index=INDEX_NAME, body={'size': 5, 'query': script_query, '_source': { 'excludes': ['title_vector']}})
+    response = client.search(index=INDEX_NAME, body={'size': 5,
+      'query': script_query,
+      '_source': { 'includes': ['title', 'body']}})
     search_time = time.time() - search_start
 
     print()
@@ -115,7 +117,7 @@ def start_query_loop():
 INDEX_NAME = 'posts'
 INDEX_FILE = 'data/posts/index.json'
 
-DATA_FILE = 'data/posts/posts_small.json'
+DATA_FILE = 'data/posts/posts_100.json'
 BATCH_SIZE = 100
 
 print("Downloading pre-trained embeddings from tensorflow hub.")
