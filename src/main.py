@@ -66,10 +66,7 @@ def index_batch(index, bulk_requests, titles):
 
 def embed_text(text):
     vectors = session.run(tensors, feed_dict={text_ph: text})
-
-    # The dense_vector field allows a maximum of 499 dimensions, whereas
-    # universal-sentence-encoder produces vectors with 512 dimensions.
-    return [vector.tolist()[:499] for vector in vectors]
+    return [vector.tolist() for vector in vectors]
 
 
 def start_query_loop():
