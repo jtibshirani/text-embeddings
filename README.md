@@ -25,11 +25,8 @@ On subsequent runs, comment out `reindex_docs()` in the script to avoid repopula
 
 The following queries return good posts in the top position, despite there not being strong term
 overlap between the query and document title:
-
 - "zipping up files" returns "Compressing / Decompressing Folders & Files"
 - "find location of an IP" returns "How to get the Country according to a certain IP?"
+- "translate bytes to doubles" returns "Convert Bytes to Floating Point Numbers in Python"
 
-# Known Issues
-
-- Universal Sentence Encoder produces vectors of length 512, but `dense_vector` dimension is capped at 500
-- need to add 1 to `cosineSimilarity` to avoid negative scores
+Note that in other cases, the results can be quite noisy and unintuitive. For example, "zipping up files" also assigns high scores to "Partial .csproj Files" and "How to avoid .pyc files?".
