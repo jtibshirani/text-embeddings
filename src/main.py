@@ -2,10 +2,12 @@ from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
 import json
-import tensorflow as tf
-import tensorflow_hub as hub
 import time
 
+# Use tensorflow 1 behavior to match the Universal Sentence Encoder
+# examples (https://tfhub.dev/google/universal-sentence-encoder/2).
+import tensorflow.compat.v1 as tf
+import tensorflow_hub as hub
 
 def reindex_docs():
     print("Creating the 'posts' index.")
@@ -126,7 +128,6 @@ BATCH_SIZE = 100
 
 print("Downloading pre-trained embeddings from tensorflow hub.")
 use_encoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
-# elmo_encoder = hub.Module("https://tfhub.dev/google/elmo/2", trainable=False)
 
 text_ph = tf.placeholder(tf.string)
 tensors = use_encoder(text_ph)
