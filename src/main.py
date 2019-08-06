@@ -9,114 +9,107 @@ import time
 import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
 
-def reindex_docs():
+##### INDEXING #####
+
+def ingest_data():
     print("Creating the 'posts' index.")
     client.indices.delete(index=INDEX_NAME, ignore=[404])
 
     with open(INDEX_FILE) as file:
         source = file.read().strip()
         client.indices.create(index=INDEX_NAME, body=source)
+    index_docs()
 
-    index_documents()
-
-
-def index_documents():
-    print("Indexing documents...")
-
+def index_docs():
     bulk_requests = []
     titles = []
-    index = 0
+    id = 0
 
     with open(DATA_FILE) as file:
         while True:
             line = file.readline().strip()
-            if not line:
-                break
+            if not line: break
 
             source = json.loads(line)
             if source["type"] != "question":
                 continue
 
-            source.update({"_op_type": "index", "_index": INDEX_NAME, "_id": index})
+            source.update({"_op_type": "index", "_index": INDEX_NAME, "_id": id})
 
             bulk_requests.append(source)
             titles.append(source["title"])
-            index += 1
+            id += 1
 
-            if index % BATCH_SIZE == 0:
-                index_batch(index, bulk_requests, titles)
+            if id % BATCH_SIZE == 0:
+                index_batch(bulk_requests, titles)
                 bulk_requests = []
                 titles = []
+                print("Indexed {} documents.".format(id))
 
         if bulk_requests:
-            index_batch(index, bulk_requests, titles)
+            index_batch(bulk_requests, titles)
+            print("Indexed {} documents.".format(id))
 
     client.indices.refresh(index=INDEX_NAME)
     print("Done indexing.")
 
-
-def index_batch(index, bulk_requests, titles):
-    print("Calculating embeddings for batch...")
+def index_batch(bulk_requests, titles):
     title_vectors = embed_text(titles)
-
     for i, request in enumerate(bulk_requests):
         request["title_vector"] = title_vectors[i]
-
-    print("Indexing documents...")
     bulk(client, bulk_requests)
 
-    print("Indexed {} documents.".format(index))
+##### SEARCHING #####
 
-
-def embed_text(text):
-    vectors = session.run(tensors, feed_dict={text_ph: text})
-    return [vector.tolist() for vector in vectors]
-
-
-def start_query_loop():
+def run_query_loop():
     while True:
-        query = input("Enter query: ")
+        try:
+            handle_query()
+        except KeyboardInterrupt:
+            return
 
-        if query == "quit":
-            break
+def handle_query():
+    query = input("Enter query: ")
 
-        encoding_start = time.time()
+    embedding_start = time.time()
+    query_vector = embed_text([query])[0]
+    embedding_time = time.time() - embedding_start
 
-        query_vector = embed_text([query])[0]
-        encoding_time = time.time() - encoding_start
-
-        script_query = {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "cosineSimilarity(params.query_vector, doc['title_vector']) + 1.0",
-                    "params": {"query_vector": query_vector},
-                },
+    script_query = {
+        "script_score": {
+            "query": {"match_all": {}},
+            "script": {
+                "source": "cosineSimilarity(params.query_vector, doc['title_vector']) + 1.0",
+                "params": {"query_vector": query_vector}
             }
         }
+    }
 
-        search_start = time.time()
-        response = client.search(
-            index=INDEX_NAME,
-            body={
-                "size": 5,
-                "query": script_query,
-                "_source": {"includes": ["title", "body"]},
-            },
-        )
-        search_time = time.time() - search_start
+    search_start = time.time()
+    response = client.search(
+        index=INDEX_NAME,
+        body={
+            "size": SEARCH_SIZE,
+            "query": script_query,
+            "_source": {"includes": ["title", "body"]}
+        }
+    )
+    search_time = time.time() - search_start
 
+    print()
+    print("{} total hits.".format(response["hits"]["total"]["value"]))
+    print("embedding time: {:.2f} ms".format(embedding_time * 1000))
+    print("search time: {:.2f} ms".format(search_time * 1000))
+    for hit in response["hits"]["hits"]:
+        print("id: {}, score: {}".format(hit["_id"], hit["_score"]))
+        print(hit["_source"])
         print()
-        print("{} total hits.".format(response["hits"]["total"]["value"]))
-        print(
-            "Encoding time: {:.2f} ms".format(encoding_time * 1000),
-            "search time: {:.2f} ms".format(search_time * 1000),
-        )
-        for hit in response["hits"]["hits"]:
-            print("id: {}, score: {}".format(hit["_id"], hit["_score"]))
-            print(hit["_source"])
-            print()
 
+##### EMBEDDING #####
+
+def embed_text(text):
+    vectors = session.run(embeddings, feed_dict={text_ph: text})
+    return [vector.tolist() for vector in vectors]
 
 ##### MAIN SCRIPT #####
 
@@ -124,22 +117,27 @@ INDEX_NAME = "posts"
 INDEX_FILE = "data/posts/index.json"
 
 DATA_FILE = "data/posts/posts_100.json"
-BATCH_SIZE = 100
+BATCH_SIZE = 1000
 
-print("Downloading pre-trained embeddings from tensorflow hub.")
-use_encoder = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
+SEARCH_SIZE = 5
 
+print("Downloading pre-trained embeddings from tensorflow hub...")
+embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
 text_ph = tf.placeholder(tf.string)
-tensors = use_encoder(text_ph)
+embeddings = embed(text_ph)
+print("Done.")
 
-print("Creating a tensorflow session.")
+print("Creating tensorflow session...")
 session = tf.Session()
 session.run(tf.global_variables_initializer())
 session.run(tf.tables_initializer())
+print("Done.")
 
 client = Elasticsearch()
 
-reindex_docs()
-start_query_loop()
+ingest_data()
+run_query_loop()
 
+print("Closing tensorflow session...")
 session.close()
+print("Done.")
