@@ -1,8 +1,8 @@
-from elasticsearch import Elasticsearch
-from elasticsearch.helpers import bulk
-
 import json
 import time
+
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
 
 # Use tensorflow 1 behavior to match the Universal Sentence Encoder
 # examples (https://tfhub.dev/google/universal-sentence-encoder/2).
@@ -112,31 +112,32 @@ def embed_text(text):
 
 ##### MAIN SCRIPT #####
 
-INDEX_NAME = "posts"
-INDEX_FILE = "data/posts/index.json"
+if __name__ == '__main__':
+    INDEX_NAME = "posts"
+    INDEX_FILE = "data/posts/index.json"
 
-DATA_FILE = "data/posts/posts.json"
-BATCH_SIZE = 1000
+    DATA_FILE = "data/posts/posts.json"
+    BATCH_SIZE = 1000
 
-SEARCH_SIZE = 5
+    SEARCH_SIZE = 5
 
-print("Downloading pre-trained embeddings from tensorflow hub...")
-embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
-text_ph = tf.placeholder(tf.string)
-embeddings = embed(text_ph)
-print("Done.")
+    print("Downloading pre-trained embeddings from tensorflow hub...")
+    embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
+    text_ph = tf.placeholder(tf.string)
+    embeddings = embed(text_ph)
+    print("Done.")
 
-print("Creating tensorflow session...")
-session = tf.Session()
-session.run(tf.global_variables_initializer())
-session.run(tf.tables_initializer())
-print("Done.")
+    print("Creating tensorflow session...")
+    session = tf.Session()
+    session.run(tf.global_variables_initializer())
+    session.run(tf.tables_initializer())
+    print("Done.")
 
-client = Elasticsearch()
+    client = Elasticsearch()
 
-index_data()
-run_query_loop()
+    index_data()
+    run_query_loop()
 
-print("Closing tensorflow session...")
-session.close()
-print("Done.")
+    print("Closing tensorflow session...")
+    session.close()
+    print("Done.")
