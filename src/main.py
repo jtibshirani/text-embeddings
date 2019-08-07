@@ -11,53 +11,52 @@ import tensorflow_hub as hub
 
 ##### INDEXING #####
 
-def ingest_data():
+def index_data():
     print("Creating the 'posts' index.")
     client.indices.delete(index=INDEX_NAME, ignore=[404])
 
     with open(INDEX_FILE) as file:
         source = file.read().strip()
         client.indices.create(index=INDEX_NAME, body=source)
-    index_docs()
 
-def index_docs():
-    bulk_requests = []
-    titles = []
-    id = 0
+    docs = []
+    count = 0
 
-    with open(DATA_FILE) as file:
-        while True:
-            line = file.readline().strip()
-            if not line: break
+    with open(DATA_FILE) as data_file:
+        for line in data_file:
+            line = line.strip()
 
-            source = json.loads(line)
-            if source["type"] != "question":
+            doc = json.loads(line)
+            if doc["type"] != "question":
                 continue
 
-            source.update({"_op_type": "index", "_index": INDEX_NAME, "_id": id})
+            docs.append(doc)
+            count += 1
 
-            bulk_requests.append(source)
-            titles.append(source["title"])
-            id += 1
+            if count % BATCH_SIZE == 0:
+                index_batch(docs)
+                docs = []
+                print("Indexed {} documents.".format(count))
 
-            if id % BATCH_SIZE == 0:
-                index_batch(bulk_requests, titles)
-                bulk_requests = []
-                titles = []
-                print("Indexed {} documents.".format(id))
-
-        if bulk_requests:
-            index_batch(bulk_requests, titles)
-            print("Indexed {} documents.".format(id))
+        if docs:
+            index_batch(docs)
+            print("Indexed {} documents.".format(count))
 
     client.indices.refresh(index=INDEX_NAME)
     print("Done indexing.")
 
-def index_batch(bulk_requests, titles):
+def index_batch(docs):
+    titles = [doc["title"] for doc in docs]
     title_vectors = embed_text(titles)
-    for i, request in enumerate(bulk_requests):
+
+    requests = []
+    for i, doc in enumerate(docs):
+        request = doc
+        request["_op_type"] = "index"
+        request["_index"] = INDEX_NAME
         request["title_vector"] = title_vectors[i]
-    bulk(client, bulk_requests)
+        requests.append(request)
+    bulk(client, requests)
 
 ##### SEARCHING #####
 
@@ -135,7 +134,7 @@ print("Done.")
 
 client = Elasticsearch()
 
-ingest_data()
+index_data()
 run_query_loop()
 
 print("Closing tensorflow session...")
