@@ -26,9 +26,12 @@ Make sure that `pip` and `python` installed (Python version 3), then install the
 pip3 install -r requirements.txt
 ```
 
-The script assumes that a local Elasticsearch node is running and able to connect. Note that
-**Elasticsearch 7.3 or higher** is required in order to use the vector functions, and that the cluster
-must be running the default (not oss) distribution. Finally, the script can be run through
+The script assumes that a local Elasticsearch node is running and able to connect. Instructions on how
+to download and run Elasticsearch can be found [here](https://www.elastic.co/downloads/elasticsearch).
+Note that **Elasticsearch 7.3 or higher** is required in order to use the vector functions, and that
+the cluster must be running the default (not oss) distribution.
+
+Finally, the script can be run through
 
 ```
 python3 src/main.py
