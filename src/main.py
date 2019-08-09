@@ -15,8 +15,8 @@ def index_data():
     print("Creating the 'posts' index.")
     client.indices.delete(index=INDEX_NAME, ignore=[404])
 
-    with open(INDEX_FILE) as file:
-        source = file.read().strip()
+    with open(INDEX_FILE) as index_file:
+        source = index_file.read().strip()
         client.indices.create(index=INDEX_NAME, body=source)
 
     docs = []
