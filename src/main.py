@@ -121,6 +121,8 @@ if __name__ == '__main__':
 
     SEARCH_SIZE = 5
 
+    GPU_LIMIT = 0.5
+
     print("Downloading pre-trained embeddings from tensorflow hub...")
     embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
     text_ph = tf.placeholder(tf.string)
@@ -128,7 +130,9 @@ if __name__ == '__main__':
     print("Done.")
 
     print("Creating tensorflow session...")
-    session = tf.Session()
+    config = tf.ConfigProto()
+    config.gpu_options.per_process_gpu_memory_fraction = GPU_LIMIT
+    session = tf.Session(config=config)
     session.run(tf.global_variables_initializer())
     session.run(tf.tables_initializer())
     print("Done.")
