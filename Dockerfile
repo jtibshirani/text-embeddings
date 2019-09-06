@@ -10,6 +10,6 @@ RUN yum update && \
     yum clean all
 WORKDIR /home/elasticsearch/
 RUN git clone https://github.com/jtibshirani/text-embeddings.git && \
-    python3.6 -m pip install -r /home/elasticsearch/text-embeddings/requirements                                                                                        .txt
+    python3.6 -m pip install -r /home/elasticsearch/text-embeddings/requirements.txt
 ENTRYPOINT ["python3.6"]
 CMD ["/home/elasticsearch/text-embeddings/src/main.py"]
