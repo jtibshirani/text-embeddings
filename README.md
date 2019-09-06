@@ -53,6 +53,7 @@ Run this docker command to install the required packages and start the applicati
 
 docker run -it shantanuo/est 
 
+### Build your own docker image:
 If you want to build your own image instead of using the pre-built image from docker hub, follow these steps:
 
 Copy dockerfile to an empty dictionary and then run this command to build an image:
