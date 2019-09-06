@@ -46,3 +46,17 @@ overlap between the query and document title:
 - "translate bytes to doubles" returns "Convert Bytes to Floating Point Numbers in Python"
 
 Note that in other cases, the results can be noisy and unintuitive. For example, "zipping up files" also assigns high scores to "Partial .csproj Files" and "How to avoid .pyc files?".
+
+## Install using Docker
+
+Run this docker command to install the required packages and start the application.
+
+docker run -it shantanuo/est 
+
+If you want to build your own image instead of using the pre-built image from docker hub, follow these steps:
+
+Copy dockerfile to an empty dictionary and then run this command to build an image:
+
+ docker build -t shantanuo/est .
+
+The tag can be any username followed by the image name. For e.g. someuser/someimage_name
