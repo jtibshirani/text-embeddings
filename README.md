@@ -51,7 +51,7 @@ Note that in other cases, the results can be noisy and unintuitive. For example,
 
 Run this docker command to install the required packages and start the application.
 
-docker run --name text_embeddings  -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node"  -d shantanuo/est
+docker run --name text_embeddings  -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node"  -d shantanuo/textembeddings
 
 docker exec -it text_embeddings bash
 
