@@ -47,23 +47,13 @@ overlap between the query and document title:
 
 Note that in other cases, the results can be noisy and unintuitive. For example, "zipping up files" also assigns high scores to "Partial .csproj Files" and "How to avoid .pyc files?".
 
-## Install using Docker
+## Running from Docker
 
-Run this docker command to install the required packages and start the application.
+Instead of downloading Elasticsearch and cloning this repository, you can run the following commands to download and run from a Docker container:
 
+```
 docker run --name text_embeddings  -p 9200:9200 -p 9300:9300 -e "discovery.type=single-node"  -d shantanuo/textembeddings
-
 docker exec -it text_embeddings bash
-
 cd text-embeddings/
-
 python3.6 src/main.py
-
-### Build your own docker image:
-If you want to build your own image instead of using the pre-built image from docker hub as shown above, follow these steps:
-
-Copy dockerfile to an empty dictionary and then run this command to build an image:
-
- docker build -t shantanuo/est .
-
-The tag can be any username followed by the image name. For e.g. someuser/someimage_name
+```
