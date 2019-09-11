@@ -265,7 +265,7 @@ if __name__ == '__main__':
 
     SEARCH_SIZE = 5
 
-    GPU_LIMIT = 0.5	
+    GPU_LIMIT = 0.5
 
     print("Downloading pre-trained embeddings from tensorflow hub...")
     embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
