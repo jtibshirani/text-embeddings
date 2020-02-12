@@ -3,6 +3,10 @@
 This repository provides a simple example of how Elasticsearch can be used for similarity
 search by combining a sentence embedding model with the `dense_vector` field type.
 
+**Important note**: Using text embeddings in search is a complex and evolving area. We hope
+this example gives a jumping off point for exploration, but it is not a recommendation for
+a particular search architecture or implementation.
+
 ## Description
 
 The main script `src/main.py` indexes the first ~20,000 questions from the
