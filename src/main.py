@@ -9,6 +9,8 @@ from elasticsearch.helpers import bulk
 import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
 
+tf.compat.v1.disable_eager_execution() # Disable eager execution for latest tensorflow 2.0 compatibility
+
 ##### INDEXING #####
 
 def index_data():
