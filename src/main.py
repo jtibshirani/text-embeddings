@@ -4,9 +4,6 @@ import time
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
-# Use tensorflow 1 behavior to match the Universal Sentence Encoder
-# examples (https://tfhub.dev/google/universal-sentence-encoder/2).
-import tensorflow.compat.v1 as tf
 import tensorflow_hub as hub
 
 ##### INDEXING #####
@@ -107,8 +104,8 @@ def handle_query():
 ##### EMBEDDING #####
 
 def embed_text(text):
-    vectors = session.run(embeddings, feed_dict={text_ph: text})
-    return [vector.tolist() for vector in vectors]
+    vectors = model(text)
+    return [vector.numpy().tolist() for vector in vectors]
 
 ##### MAIN SCRIPT #####
 
@@ -124,24 +121,13 @@ if __name__ == '__main__':
     GPU_LIMIT = 0.5
 
     print("Downloading pre-trained embeddings from tensorflow hub...")
-    embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
-    text_ph = tf.placeholder(tf.string)
-    embeddings = embed(text_ph)
-    print("Done.")
-
-    print("Creating tensorflow session...")
-    config = tf.ConfigProto()
-    config.gpu_options.per_process_gpu_memory_fraction = GPU_LIMIT
-    session = tf.Session(config=config)
-    session.run(tf.global_variables_initializer())
-    session.run(tf.tables_initializer())
-    print("Done.")
+    module_url = "https://tfhub.dev/google/universal-sentence-encoder/4"
+    model = hub.load(module_url)
+    print("module %s loaded" % module_url)
 
     client = Elasticsearch()
 
     index_data()
     run_query_loop()
 
-    print("Closing tensorflow session...")
-    session.close()
     print("Done.")
