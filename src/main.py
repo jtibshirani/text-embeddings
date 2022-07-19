@@ -6,7 +6,7 @@ from elasticsearch.helpers import bulk
 
 # Use tensorflow 1 behavior to match the Universal Sentence Encoder
 # examples (https://tfhub.dev/google/universal-sentence-encoder/2).
-import tensorflow.compat.v1 as tf
+import tensorflow as tf
 import tensorflow_hub as hub
 
 ##### INDEXING #####
@@ -78,7 +78,7 @@ def handle_query():
         "script_score": {
             "query": {"match_all": {}},
             "script": {
-                "source": "cosineSimilarity(params.query_vector, doc['title_vector']) + 1.0",
+                "source": "cosineSimilarity(params.query_vector, 'title_vector') + 1.0",
                 "params": {"query_vector": query_vector}
             }
         }
@@ -87,11 +87,10 @@ def handle_query():
     search_start = time.time()
     response = client.search(
         index=INDEX_NAME,
-        body={
-            "size": SEARCH_SIZE,
-            "query": script_query,
-            "_source": {"includes": ["title", "body"]}
-        }
+        size=SEARCH_SIZE,
+        query=script_query,
+        _source={"includes": ["title", "body"]}
+
     )
     search_time = time.time() - search_start
 
@@ -123,18 +122,20 @@ if __name__ == '__main__':
 
     GPU_LIMIT = 0.5
 
+    tf.compat.v1.disable_eager_execution()
+
     print("Downloading pre-trained embeddings from tensorflow hub...")
-    embed = hub.Module("https://tfhub.dev/google/universal-sentence-encoder/2")
-    text_ph = tf.placeholder(tf.string)
+    embed = hub.load("https://tfhub.dev/google/universal-sentence-encoder/4")
+    text_ph = tf.compat.v1.placeholder(tf.string)
     embeddings = embed(text_ph)
     print("Done.")
 
     print("Creating tensorflow session...")
-    config = tf.ConfigProto()
+    config = tf.compat.v1.ConfigProto()
     config.gpu_options.per_process_gpu_memory_fraction = GPU_LIMIT
-    session = tf.Session(config=config)
-    session.run(tf.global_variables_initializer())
-    session.run(tf.tables_initializer())
+    session = tf.compat.v1.Session(config=config)
+    session.run(tf.compat.v1.global_variables_initializer())
+    session.run(tf.compat.v1.tables_initializer())
     print("Done.")
 
     client = Elasticsearch()
